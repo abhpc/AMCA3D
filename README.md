@@ -44,41 +44,41 @@ build/AMCA3D
 
 `compile.sh` 支持通过环境变量调整编译行为：
 
+指定并行编译线程数：
+
 ```bash
 JOBS=8 ./compile.sh
 ```
 
-指定并行编译线程数。
+复用已有 `build` 目录进行增量编译：
 
 ```bash
 CLEAN=0 ./compile.sh
 ```
 
-复用已有 `build` 目录进行增量编译。
+生成 Debug 构建：
 
 ```bash
 BUILD_TYPE=Debug ./compile.sh
 ```
 
-生成 Debug 构建。
+指定需要加载的 MPI 模块。默认值为 `mpich/3.2`：
 
 ```bash
 MPI_MODULE=mpich/3.2 ./compile.sh
 ```
 
-指定需要加载的 MPI 模块。默认值为 `mpich/3.2`。
+跳过模块加载，使用当前 shell 环境中的 MPI：
 
 ```bash
 LOAD_MPI_MODULE=0 ./compile.sh
 ```
 
-跳过模块加载，使用当前 shell 环境中的 MPI。
+加载 MPICH 前不执行 `module purge`：
 
 ```bash
 PURGE_MODULES=0 ./compile.sh
 ```
-
-加载 MPICH 前不执行 `module purge`。
 
 如果 Boost 或 yaml-cpp 安装在非系统路径，可通过以下变量传入：
 
