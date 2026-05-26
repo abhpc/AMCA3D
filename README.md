@@ -42,9 +42,7 @@ build/AMCA3D
 
 ## 编译脚本参数
 
-`compile.sh` 支持通过环境变量调整编译行为：
-
-指定并行编译线程数：
+`compile.sh` 支持通过环境变量调整编译行为。指定并行编译线程数：
 
 ```bash
 JOBS=8 ./compile.sh
@@ -62,7 +60,7 @@ CLEAN=0 ./compile.sh
 BUILD_TYPE=Debug ./compile.sh
 ```
 
-指定需要加载的 MPI 模块。默认值为 `mpich/3.2`：
+指定需要加载的 MPI 模块（默认值为 `mpich/3.2`）：
 
 ```bash
 MPI_MODULE=mpich/3.2 ./compile.sh
