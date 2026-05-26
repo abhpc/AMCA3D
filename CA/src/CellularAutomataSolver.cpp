@@ -39,12 +39,12 @@ CellularAutomataSolver::~CellularAutomataSolver()
 void
 CellularAutomataSolver::load(const YAML::Node &node)
 {  
-  const YAML::Node * realms = node.FindValue("realms");
+  YAML::Node realms = node["realms"];
   if (realms)
   {
-    for (size_t irealm = 0; irealm < realms->size(); irealm++)
+    for (size_t irealm = 0; irealm < realms.size(); irealm++)
     {
-      const YAML::Node & realm_node = (*realms)[irealm];
+      const YAML::Node realm_node = realms[irealm];
       // check for realm type
       std::string realmType; //= "cellular_automata";
       get_required(realm_node, "type", realmType);
@@ -96,24 +96,24 @@ CellularAutomataSolver::load(const YAML::Node &node)
     throw std::runtime_error("parser error: realms");
 
   // FIEME: will move this to some class, say time integration class
-  const YAML::Node * timeIntegration = node.FindValue("time_integrators");
+  YAML::Node timeIntegration = node["time_integrators"];
   if (timeIntegration)
   {
     // Make some things pretty in the log file
     CafeEnv::self().caOutputP0() << "\n" << "Time Integration Review" << "\n";
     CafeEnv::self().caOutputP0() << "=============================" << "\n";
 
-    for (size_t iTimeInte = 0; iTimeInte < timeIntegration->size(); iTimeInte++)
+    for (size_t iTimeInte = 0; iTimeInte < timeIntegration.size(); iTimeInte++)
     {
-      const YAML::Node &timeInte_node = (*timeIntegration)[iTimeInte];
-      const YAML::Node *standardTimeInte_node = timeInte_node.FindValue("standard_time_integrator");
+      const YAML::Node timeInte_node = timeIntegration[iTimeInte];
+      YAML::Node standardTimeInte_node = timeInte_node["standard_time_integrator"];
       if (standardTimeInte_node)
       {
         //(*standardTimeInte_node)["name"] >> name_;   // will be used in the future
-        (*standardTimeInte_node)["termination_time"] >> finalTime_;
-        (*standardTimeInte_node)["time_step"] >> maxDt_;
-        get_if_present(*standardTimeInte_node, "termination_step_count", maxSteps_, maxSteps_);
-        get_if_present(*standardTimeInte_node, "time_step_factor_ca", caManager_->timeStepFactor_, caManager_->timeStepFactor_);
+        standardTimeInte_node["termination_time"] >> finalTime_;
+        standardTimeInte_node["time_step"] >> maxDt_;
+        get_if_present(standardTimeInte_node, "termination_step_count", maxSteps_, maxSteps_);
+        get_if_present(standardTimeInte_node, "time_step_factor_ca", caManager_->timeStepFactor_, caManager_->timeStepFactor_);
         // yaml-cpp Receipt
         CafeEnv::self().caOutputP0() << "Time Integration details gathered from input file and/or defaults:" << "\n";
         CafeEnv::self().caOutputP0() << "Termination Time: " << finalTime_ << "\n";

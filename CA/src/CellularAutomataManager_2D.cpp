@@ -66,21 +66,21 @@ CellularAutomataManager_2D::load(const YAML::Node& node)
   int    numbCell[2];
 
   // get domain size
-  const YAML::Node * domain_node = node.FindValue("domain");
+  YAML::Node domain_node = node["domain"];
   if (domain_node)
   {
-    get_required(*domain_node, "original_point", original_point);
-    get_required(*domain_node, "lateral_sizes", lateral_size);
+    get_required(domain_node, "original_point", original_point);
+    get_required(domain_node, "lateral_sizes", lateral_size);
   }
   else
     throw std::runtime_error("parser error: realm-domain");
 
   // get discretization info
-  const YAML::Node * discretization_node = node.FindValue("discretization");
+  YAML::Node discretization_node = node["discretization"];
   if (discretization_node)
   {
-    get_required(*discretization_node, "cell_sizes", dCell);
-    get_required(*discretization_node, "number_cells", numbCell);
+    get_required(discretization_node, "cell_sizes", dCell);
+    get_required(discretization_node, "number_cells", numbCell);
   }
   else
     throw std::runtime_error("parser error: realm-discretization");
@@ -95,29 +95,29 @@ CellularAutomataManager_2D::load(const YAML::Node& node)
   ny_ = numbCell[1];
 
   // nucleation sites density and pdf
-  const YAML::Node * nucleation = node.FindValue("nucleation_rules");
+  YAML::Node nucleation = node["nucleation_rules"];
   if (nucleation)
   {
-    for (size_t iterator = 0; iterator < nucleation->size(); iterator++)
+    for (size_t iterator = 0; iterator < nucleation.size(); iterator++)
     {
-      const YAML::Node & nucleation_node = (*nucleation)[iterator];
-      const YAML::Node * surface_node = nucleation_node.FindValue("surface");
+      const YAML::Node nucleation_node = nucleation[iterator];
+      YAML::Node surface_node = nucleation_node["surface"];
       if (surface_node)
       {
         std::string type = "Gaussian";
-        get_if_present(*surface_node, "type", type, type);
-        get_required(*surface_node, "site_density", ns_);
-        get_required(*surface_node, "mean", deltaTs_max_);
-        get_required(*surface_node, "standard_deviation", deltaTs_sigma_);
+        get_if_present(surface_node, "type", type, type);
+        get_required(surface_node, "site_density", ns_);
+        get_required(surface_node, "mean", deltaTs_max_);
+        get_required(surface_node, "standard_deviation", deltaTs_sigma_);
       }
-      const YAML::Node * bulk_node = nucleation_node.FindValue("bulk");
+      YAML::Node bulk_node = nucleation_node["bulk"];
       if (bulk_node)
       {
         std::string type = "Gaussian";
-        get_if_present(*bulk_node, "type", type, type);
-        get_required(*bulk_node, "site_density", nv_);
-        get_required(*bulk_node, "mean", deltaTv_max_);
-        get_required(*bulk_node, "standard_deviation", deltaTv_sigma_);
+        get_if_present(bulk_node, "type", type, type);
+        get_required(bulk_node, "site_density", nv_);
+        get_required(bulk_node, "mean", deltaTv_max_);
+        get_required(bulk_node, "standard_deviation", deltaTv_sigma_);
       }
     }
   }

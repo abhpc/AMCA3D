@@ -25,7 +25,7 @@ public:
     switch (type)
     {
     case YAML::NodeType::Scalar:
-      node >> out;
+      out = node.as<std::string>();
       emout << out;
       break;
       
@@ -41,11 +41,11 @@ public:
 
     case YAML::NodeType::Map:
       emout << YAML::BeginMap;
-      for (YAML::Iterator i = node.begin(); i != node.end(); i++)
+      for (YAML::const_iterator i = node.begin(); i != node.end(); ++i)
       {
-        const YAML::Node & key = i.first();
-        const YAML::Node & value = i.second();
-        key >> out;
+        const YAML::Node key = i->first;
+        const YAML::Node value = i->second;
+        out = key.as<std::string>();
         emout << YAML::Key << out;
         emout << YAML::Value;
         emit(emout, value);
@@ -80,9 +80,9 @@ public:
   {
     std::ostringstream sout;
     sout << "(pos, line, colum) = ("
-         << node.GetMark().pos << ", "
-         << node.GetMark().line << ","
-         << node.GetMark().column << ")";
+         << node.Mark().pos << ", "
+         << node.Mark().line << ","
+         << node.Mark().column << ")";
     return sout.str();
   }
 
@@ -109,7 +109,7 @@ public:
     switch (type)
     {
     case YAML::NodeType::Scalar:
-      node >> out;
+      out = node.as<std::string>();
       sout << indent << "Scalar: " << out << std::endl;
       break;
 
@@ -125,12 +125,12 @@ public:
 
     case YAML::NodeType::Map:
       sout << indent << "Map: " << std::endl;
-      for (YAML::Iterator i = node.begin(); i != node.end(); i++)
+      for (YAML::const_iterator i = node.begin(); i != node.end(); ++i)
       {
-        const YAML::Node& key = i.first();
-        const YAML::Node& value = i.second();
+        const YAML::Node key = i->first;
+        const YAML::Node value = i->second;
 
-        key >> out;
+        out = key.as<std::string>();
         sout << indent << "Key: " << out << std::endl;
         sout << indent << "Value: " << std::endl;
         traverse(sout, value, depth + 1);
@@ -158,7 +158,7 @@ public:
     YAML::NodeType::value type = node.Type();
     if (type != YAML::NodeType::Scalar && type != YAML::NodeType::Null)
     {
-      const YAML::Node *value = node.FindValue(key);
+      YAML::Node value = node[key];
       if (value)
         result.push_back(&node);
     }
@@ -177,9 +177,9 @@ public:
       break;
 
     case YAML::NodeType::Map:
-      for (YAML::Iterator i = node.begin(); i != node.end(); i++)
+      for (YAML::const_iterator i = node.begin(); i != node.end(); ++i)
       {
-        const YAML::Node& value = i.second();
+        const YAML::Node value = i->second;
         find_nodes_given_key(key, value, result);
       }
       break;

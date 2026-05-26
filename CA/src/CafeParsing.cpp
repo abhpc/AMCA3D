@@ -83,11 +83,11 @@ operator >> (const YAML::Node& node, int * variable)
 
 /*================================================================================*/
 
-const YAML::Node *
+YAML::Node
 expect_type(const YAML::Node& node, const std::string& key, YAML::NodeType::value type, bool optional)
 {
   static std::string types[] = {"Null", "Scalar", "Sequence", "Map"};
-  const YAML::Node *value = node.FindValue(key);
+  YAML::Node value = node[key];
   std::ostringstream err_msg;
   if (!optional && !value)
   {
@@ -102,12 +102,12 @@ expect_type(const YAML::Node& node, const std::string& key, YAML::NodeType::valu
     throw std::runtime_error("Error:: parsing");
   }
 
-  if (value && (value->Type() != type))
+  if (value && (value.Type() != type))
   {
     if (!CafeEnv::self().parallel_rank())
     {
       err_msg << "Error: parsing expected type " << types[type] << " got type ="
-        << types[value->Type()]
+        << types[value.Type()]
         << "  for key= " << key
         << " at " << ParsingHelper::line_info(node)
         << " node= " << std::endl;
@@ -120,25 +120,25 @@ expect_type(const YAML::Node& node, const std::string& key, YAML::NodeType::valu
   return value;
 }
 
-const YAML::Node *
+YAML::Node
 expect_null(const YAML::Node& node, const std::string& key, bool optional)
 {
   return expect_type(node, key, YAML::NodeType::Null, optional);
 }
 
-const YAML::Node *
+YAML::Node
 expect_scalar(const YAML::Node& node, const std::string& key, bool optional)
 {
   return expect_type(node, key, YAML::NodeType::Scalar, optional);
 }
 
-const YAML::Node *
+YAML::Node
 expect_sequence(const YAML::Node& node, const std::string& key, bool optional)
 {
   return expect_type(node, key, YAML::NodeType::Sequence, optional);
 }
 
-const YAML::Node *
+YAML::Node
 expect_map(const YAML::Node& node, const std::string& key, bool optional)
 {
   return expect_type(node, key, YAML::NodeType::Map, optional);

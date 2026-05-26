@@ -7,10 +7,18 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include "CafeEnv.h"
 #include "ParsingHelper.h"
+
+template<typename T>
+typename std::enable_if<!std::is_array<T>::value && !std::is_pointer<T>::value, void>::type
+operator >> (const YAML::Node& node, T& result)
+{
+  result = node.as<T>();
+}
 
 // our data types
 struct Coordinates
@@ -98,9 +106,9 @@ template<typename T>
 void get_if_present(const YAML::Node& node, const std::string& key, T& result, 
                                         const T& default_if_not_present = T())
 {
-  const YAML::Node *value = node.FindValue(key);
+  YAML::Node value = node[key];
   if (value)
-    *value >> result;
+    value >> result;
   else
     result = default_if_not_present;
 }
@@ -112,9 +120,9 @@ void get_if_present(const YAML::Node& node, const std::string& key, T& result,
 template<typename T>
 void get_if_present_no_default(const YAML::Node& node, const std::string& key, T& result)
 {
-  const YAML::Node *value = node.FindValue(key);
+  YAML::Node value = node[key];
   if (value)
-    *value >> result;
+    value >> result;
 }
 
 /*------------------------------------------------------------------------------
@@ -123,9 +131,9 @@ void get_if_present_no_default(const YAML::Node& node, const std::string& key, T
 template<typename T>
 void get_required(const YAML::Node& node, const std::string& key, T& result)
 {
-  const YAML::Node *value = node.FindValue(key);
+  YAML::Node value = node[key];
   if (value)
-    *value >> result;
+    value >> result;
   else
   {
     if (!CafeEnv::self().parallel_rank())
@@ -144,19 +152,19 @@ void get_required(const YAML::Node& node, const std::string& key, T& result)
 /*----------------------------------------------------------------------------
     these can be used to check and ensure a type of yaml node is as expected
   ----------------------------------------------------------------------------*/
-const YAML::Node *
+YAML::Node
 expect_type(const YAML::Node& node, const std::string& key, YAML::NodeType::value type, bool optional=false);
 
-const YAML::Node *
+YAML::Node
 expect_null(const YAML::Node& node, const std::string& key, bool optional=false);
 
-const YAML::Node *
+YAML::Node
 expect_scalar(const YAML::Node& node, const std::string& key, bool optional=false);
 
-const YAML::Node *
+YAML::Node
 expect_sequence(const YAML::Node& node, const std::string& key, bool optional=false);
 
-const YAML::Node *
+YAML::Node
 expect_map(const YAML::Node& node, const std::string& key, bool optional=false);
 
 #endif

@@ -108,14 +108,13 @@ int main(int argc, char ** argv)
   cafeEnv.set_log_file_stream(logFileName);
 
   // proceed with reading input file "document" from YAML
-  YAML::Parser parser(fin);
   YAML::Node doc;
 
   try
   {
-    parser.GetNextDocument(doc);
+    doc = YAML::Load(fin);
   }
-  catch (YAML::ParserException &e)
+  catch (const YAML::ParserException &e)
   {
     std::cout << e.what() << std::endl;
   }

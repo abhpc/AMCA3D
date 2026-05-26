@@ -46,16 +46,16 @@ VtuManager::load(const YAML::Node& node)
   CafeEnv::self().caOutputP0() << "\n" << "VtuManager Review" << "\n";
   CafeEnv::self().caOutputP0() << "=============================" << "\n";
 
-  const YAML::Node *vtu_output = node.FindValue("output");
+  YAML::Node vtu_output = node["output"];
   if (vtu_output)
   {
-    get_if_present(*vtu_output, "output_frequency", outputFreq_, outputFreq_);
+    get_if_present(vtu_output, "output_frequency", outputFreq_, outputFreq_);
     if (outputFreq_ < 1) {
       outputBasedonFreq_ = false;
     }
-    get_if_present(*vtu_output, "output_data_base_name", fileBase_, fileBase_);
+    get_if_present(vtu_output, "output_data_base_name", fileBase_, fileBase_);
     outputTimeInterval_ = -1;
-    get_if_present(*vtu_output, "output_time_interval", outputTimeInterval_, outputTimeInterval_);
+    get_if_present(vtu_output, "output_time_interval", outputTimeInterval_, outputTimeInterval_);
     if (outputTimeInterval_ > 0) {
       outputTimeThreshold_ = 0.0;
     }
@@ -66,13 +66,13 @@ VtuManager::load(const YAML::Node& node)
       outputVar_.push_back(ID);
     }
     // output variables
-    const YAML::Node * varList = vtu_output->FindValue("output_variables");
+    YAML::Node varList = vtu_output["output_variables"];
     if (varList)
     {
-      for (size_t iVar = 0; iVar < varList->size(); iVar++)
+      for (size_t iVar = 0; iVar < varList.size(); iVar++)
       {
         std::string name;
-        (*varList)[iVar] >> name;
+        varList[iVar] >> name;
         int ID = response_to_output_varialbes_controls(name);
         if (ID >= 0 && ID != 0 && ID != 5)
         {

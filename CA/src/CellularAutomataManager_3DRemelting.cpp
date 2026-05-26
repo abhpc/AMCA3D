@@ -54,14 +54,14 @@ CellularAutomataManager_3DRemelting::load(const YAML::Node& node)
   CellularAutomataManager_3D::load(node);
 
   // solution option
-  const YAML::Node * solutionOptions = node.FindValue("solution_options");
+  YAML::Node solutionOptions = node["solution_options"];
   if (solutionOptions) {
-      const YAML::Node *options_node = expect_sequence(*solutionOptions, "options", true);
+      YAML::Node options_node = expect_sequence(solutionOptions, "options", true);
       if (options_node) {
-          for (size_t ioption = 0; ioption < options_node->size(); ioption++) {
-              const YAML::Node &option_node = (*options_node)[ioption];
+          for (size_t ioption = 0; ioption < options_node.size(); ioption++) {
+              const YAML::Node option_node = options_node[ioption];
               if (expect_map(option_node, "criterion_to_activate_grain", true)) {
-                  const YAML::Node &grainOption = *option_node.FindValue("criterion_to_activate_grain");
+                  YAML::Node grainOption = option_node["criterion_to_activate_grain"];
 
                   get_required(grainOption, "using_nucleation_seed", setNucleationSite_);
                   CafeEnv::self().caOutputP0() << "Criteria for nucleation:" << "\n";

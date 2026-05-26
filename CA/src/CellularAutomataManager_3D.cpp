@@ -76,13 +76,13 @@ CellularAutomataManager_3D::load(const YAML::Node & node)
   int    numbCells[3] = { -1 - 1 - 1 };
   
   // get domain size
-  const YAML::Node * domain_node = node.FindValue("domain");
+  YAML::Node domain_node = node["domain"];
   if (domain_node)
   {
     CafeEnv::self().caOutputP0() << "\n" << "Domain Size Review" << "\n";
     CafeEnv::self().caOutputP0() << "=============================" << "\n";
     std::string fileName;
-    get_if_present_no_default(*domain_node, "load_microstructure_information", fileName);
+    get_if_present_no_default(domain_node, "load_microstructure_information", fileName);
     if(fileName=="")
     {
       loadMicrostructureInfo_ = false;
@@ -135,9 +135,9 @@ CellularAutomataManager_3D::load(const YAML::Node & node)
   if (domain_node && !loadMicrostructureInfo_)
   {
     // Make some things pretty in the log file
-    get_required(*domain_node, "original_point", original_point);
+    get_required(domain_node, "original_point", original_point);
     //get_if_present(*domain_node, "lateral_sizes", lateral_size, lateral_size);
-    get_if_present_no_default(*domain_node, "lateral_sizes", lateral_size);
+    get_if_present_no_default(domain_node, "lateral_sizes", lateral_size);
   }
   else if(!loadMicrostructureInfo_)
     throw std::runtime_error("parser error: realm-domain");
@@ -153,16 +153,16 @@ CellularAutomataManager_3D::load(const YAML::Node & node)
                                   << "    Lz=" << lateral_size[2] << "\n";
   }
   // get discretization info
-  const YAML::Node * discretization_node = node.FindValue("discretization");
+  YAML::Node discretization_node = node["discretization"];
   if (discretization_node && !loadMicrostructureInfo_)
   {
     // Make some things pretty in the log file
     CafeEnv::self().caOutputP0() << "\n" << "Discretization Review" << "\n";
     CafeEnv::self().caOutputP0() << "=============================" << "\n";
 
-    get_required(*discretization_node, "cell_size", dCell);
+    get_required(discretization_node, "cell_size", dCell);
     if (lateral_size[0] < 0)
-       get_required(*discretization_node, "number_cells", numbCells);
+       get_required(discretization_node, "number_cells", numbCells);
     else
     {
       for (int i = 0; i < 3; i++)
@@ -190,13 +190,13 @@ CellularAutomataManager_3D::load(const YAML::Node & node)
   nz_ = numbCells[2];
 
   // nucleation sites density and pdf
-  const YAML::Node * nucleation = node.FindValue("nucleation_rules");
+  YAML::Node nucleation = node["nucleation_rules"];
   if (nucleation)
   {
-    for (size_t iterator = 0; iterator < nucleation->size(); iterator++)
+    for (size_t iterator = 0; iterator < nucleation.size(); iterator++)
     {
-      const YAML::Node & nucleation_node = (*nucleation)[iterator];
-      const YAML::Node * surface_node = nucleation_node.FindValue("surface");
+      const YAML::Node nucleation_node = nucleation[iterator];
+      YAML::Node surface_node = nucleation_node["surface"];
       if (surface_node)
       {
         // Make some things pretty in the log file
@@ -204,17 +204,17 @@ CellularAutomataManager_3D::load(const YAML::Node & node)
         CafeEnv::self().caOutputP0() << "=============================" << "\n";
 
         std::string type = "Gaussian";
-        get_required(*surface_node, "type", type);
-        get_required(*surface_node, "site_density", ns_);
-        get_required(*surface_node, "mean", deltaTs_max_);
-        get_required(*surface_node, "standard_deviation", deltaTs_sigma_);
+        get_required(surface_node, "type", type);
+        get_required(surface_node, "site_density", ns_);
+        get_required(surface_node, "mean", deltaTs_max_);
+        get_required(surface_node, "standard_deviation", deltaTs_sigma_);
 
         CafeEnv::self().caOutputP0() << "PDF: " << type << "\n";
         CafeEnv::self().caOutputP0() << "Site Density: " << ns_ << "\n";
         CafeEnv::self().caOutputP0() << "Mean: " << deltaTs_max_ << "\n";
         CafeEnv::self().caOutputP0() << "Standard Deviation: " << deltaTs_sigma_ << "\n";
       }
-      const YAML::Node * bulk_node = nucleation_node.FindValue("bulk");
+      YAML::Node bulk_node = nucleation_node["bulk"];
       if (bulk_node)
       {
         // Make some things pretty in the log file
@@ -222,10 +222,10 @@ CellularAutomataManager_3D::load(const YAML::Node & node)
         CafeEnv::self().caOutputP0() << "=============================" << "\n";
 
         std::string type = "Gaussian";
-        get_if_present(*bulk_node, "type", type, type);
-        get_required(*bulk_node, "site_density", nv_);
-        get_required(*bulk_node, "mean", deltaTv_max_);
-        get_required(*bulk_node, "standard_deviation", deltaTv_sigma_);
+        get_if_present(bulk_node, "type", type, type);
+        get_required(bulk_node, "site_density", nv_);
+        get_required(bulk_node, "mean", deltaTv_max_);
+        get_required(bulk_node, "standard_deviation", deltaTv_sigma_);
 
         CafeEnv::self().caOutputP0() << "PDF: " << type << "\n";
         CafeEnv::self().caOutputP0() << "Site Density: " << nv_ << "\n";
@@ -245,24 +245,24 @@ CellularAutomataManager_3D::load(const YAML::Node & node)
   //throw std::runtime_error("parser error: realm-nucleation_rules");
 
   // solution options
-  const YAML::Node * solutionOptions = node.FindValue("solution_options");
+  YAML::Node solutionOptions = node["solution_options"];
   if (solutionOptions)
   {
     // Make some things pretty in the log file
     CafeEnv::self().caOutputP0() << "\n" << "Solution Options Review" << "\n";
     CafeEnv::self().caOutputP0() << "=============================" << std::endl;
     std::string name_;
-    get_required(*solutionOptions, "name", name_);
+    get_required(solutionOptions, "name", name_);
 
-    const YAML::Node * options_node = expect_sequence(*solutionOptions, "options", true);
+    YAML::Node options_node = expect_sequence(solutionOptions, "options", true);
     if (options_node)
     {
-      for (size_t ioption = 0; ioption < options_node->size(); ioption++)
+      for (size_t ioption = 0; ioption < options_node.size(); ioption++)
       {
-        const YAML::Node & option_node = (*options_node)[ioption];
+        const YAML::Node option_node = options_node[ioption];
         if (expect_map(option_node, "output_microstructure_information", true))
         {
-          const YAML::Node& fileName = *option_node.FindValue("output_microstructure_information");
+          YAML::Node fileName = option_node["output_microstructure_information"];
           get_required(fileName, "file_name", microstructureInformationFileName_output_);
           outputMicrostructureInfo_ = true;
           get_if_present(fileName, "output_seeds", output_nucleation_seeds_, output_nucleation_seeds_);
@@ -272,7 +272,7 @@ CellularAutomataManager_3D::load(const YAML::Node & node)
         }
         else if (expect_map(option_node, "random_type", true))
         {
-          const YAML::Node& randomType = *option_node.FindValue("random_type");
+          YAML::Node randomType = option_node["random_type"];
           get_if_present(randomType, "shuffer_vtr_grain_ID", shafferVtrID_,shafferVtrID_);
           get_if_present(randomType, "shuffer_vtk_grain_ID", shafferVtkID_,shafferVtrID_);
           get_if_present(randomType, "random_microstructure_information", randomMicrostructureInfo_,randomMicrostructureInfo_);
@@ -282,17 +282,17 @@ CellularAutomataManager_3D::load(const YAML::Node & node)
         }
         else if (expect_map(option_node, "phase_state", true))
         {
-          const YAML::Node& phaseState = *option_node.FindValue("phase_state");
+          YAML::Node phaseState = option_node["phase_state"];
           get_if_present(phaseState, "has_been_melted", setInitialStatedAsMelted_, setInitialStatedAsMelted_);
           CafeEnv::self().caOutputP0() << "phase state: has been melted = " << setInitialStatedAsMelted_ << std::endl;
         }
         else if (expect_map(option_node, "cell_grain_length_cutoff_factor", true))
         {
-          const YAML::Node& cutOff = *option_node.FindValue("cell_grain_length_cutoff_factor");
-          get_if_present(cutOff, "factor_value", cellGrainLegnthCutoff_, cellGrainLegnthCutoff_);          
+          YAML::Node cutOff = option_node["cell_grain_length_cutoff_factor"];
+          get_if_present(cutOff, "factor_value", cellGrainLegnthCutoff_, cellGrainLegnthCutoff_);
         }
         else if (expect_map(option_node, "parallel_specification", true)) {
-          const YAML::Node& parallel = *option_node.FindValue("parallel_specification");
+          YAML::Node parallel = option_node["parallel_specification"];
           std::string axis = "o";
           get_if_present(parallel, "direction_with_all_processes", axis, axis);
           if (axis != "o") {
@@ -308,7 +308,7 @@ CellularAutomataManager_3D::load(const YAML::Node & node)
           }
         }
         else if (expect_map(option_node, "envelope", true)) {
-          const YAML::Node& envelopeInfor = *option_node.FindValue("envelope");
+          YAML::Node envelopeInfor = option_node["envelope"];
           double diagonalLengthFactor = -1;
           get_if_present(envelopeInfor, "max_half_diagonal_length", diagonalLengthFactor, diagonalLengthFactor);
           if (diagonalLengthFactor > 0) {
@@ -320,7 +320,7 @@ CellularAutomataManager_3D::load(const YAML::Node & node)
                 continue;
             else
             {
-                const YAML::Node& fileName = *option_node.FindValue("load_microstructure_information");
+                YAML::Node fileName = option_node["load_microstructure_information"];
                 get_required(fileName, "file_name", microstructureInformationFileName_load_);
                 if (microstructureInformationFileName_load_ == "random")
                 {

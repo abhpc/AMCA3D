@@ -62,26 +62,26 @@ ProblemPhysics_RappazGandin1993::load(const YAML::Node& node)
   CafeEnv::self().caOutputP0() << "=============================" << "\n";
 
 
-  const YAML::Node *RappazGandin = node.FindValue("problem_physics");
+  YAML::Node RappazGandin = node["problem_physics"];
   if (RappazGandin)
   {
-    get_required(*RappazGandin, "type", name_);
+    get_required(RappazGandin, "type", name_);
     if (name_ != "RappazGandin")
       throw std::runtime_error("parsing error: realm-problem_physics-RappazGandin");
 
-    get_if_present(*RappazGandin, "initial_temperature",initialTemperature_,initialTemperature_);
-    get_if_present(*RappazGandin, "liquidus_temperature", meltingTemperature_, meltingTemperature_);
-    get_if_present(*RappazGandin, "melting_temperature", meltingTemperature_, meltingTemperature_);
-    get_if_present(*RappazGandin, "solidus_temperature", solidusTemperature_, solidusTemperature_);
+    get_if_present(RappazGandin, "initial_temperature",initialTemperature_,initialTemperature_);
+    get_if_present(RappazGandin, "liquidus_temperature", meltingTemperature_, meltingTemperature_);
+    get_if_present(RappazGandin, "melting_temperature", meltingTemperature_, meltingTemperature_);
+    get_if_present(RappazGandin, "solidus_temperature", solidusTemperature_, solidusTemperature_);
     minTemperatureToNucleate_ = solidusTemperature_;
-    get_if_present(*RappazGandin, "minimum_temperature_for_nucleation", minTemperatureToNucleate_, minTemperatureToNucleate_);
-    get_if_present(*RappazGandin, "t_dot", Tdot_, Tdot_);
-    get_if_present(*RappazGandin, "a1", a1_, a1_);
-    get_if_present(*RappazGandin, "a2", a2_, a2_);
-    get_if_present(*RappazGandin, "a3", a3_, a3_);
-    get_if_present(*RappazGandin, "b1", b1_, b1_);
-    get_if_present(*RappazGandin, "b2", b2_, b2_);
-    get_if_present(*RappazGandin, "b3", b3_, b3_);
+    get_if_present(RappazGandin, "minimum_temperature_for_nucleation", minTemperatureToNucleate_, minTemperatureToNucleate_);
+    get_if_present(RappazGandin, "t_dot", Tdot_, Tdot_);
+    get_if_present(RappazGandin, "a1", a1_, a1_);
+    get_if_present(RappazGandin, "a2", a2_, a2_);
+    get_if_present(RappazGandin, "a3", a3_, a3_);
+    get_if_present(RappazGandin, "b1", b1_, b1_);
+    get_if_present(RappazGandin, "b2", b2_, b2_);
+    get_if_present(RappazGandin, "b3", b3_, b3_);
 
     // yaml-cpp Receipt
     CafeEnv::self().caOutputP0() << "Problem_physics details gathered from input file and/or defaults:" << "\n";
@@ -198,8 +198,8 @@ Material_HeatConduction::load(const YAML::Node& node)
   CafeEnv::self().caOutputP0() << "\n" << "Heat Conduction Model Review" << "\n";
   CafeEnv::self().caOutputP0() << "=============================" << "\n";
 
-  //const YAML::Node *matHeat = node.FindValue("heat_conduction");
-  if (node.FindValue("heat_conduction"))
+  //YAML::Node matHeat = node["heat_conduction"];
+  if (node["heat_conduction"])
   {   
     get_required(node, "density", density_);   
     get_required(node, "solid_thermal_capacity", Cps_);

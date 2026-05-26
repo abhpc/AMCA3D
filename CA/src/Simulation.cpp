@@ -36,13 +36,13 @@ void
 Simulation::load(const YAML::Node& node)
 {
   high_level_banner();
-  const YAML::Node * mySolver = node.FindValue("solvers");
+  YAML::Node mySolver = node["solvers"];
   if (mySolver)
-  {   
-    for (size_t iSolver = 0; iSolver < mySolver->size(); iSolver++)
+  {
+    for (size_t iSolver = 0; iSolver < mySolver.size(); iSolver++)
     {
       std::string name;
-      (*mySolver)[iSolver] >> name;
+      mySolver[iSolver] >> name;
       if (name == "cellular_automata")
       {
         cellularAutomata_ = true;

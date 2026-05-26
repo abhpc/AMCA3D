@@ -62,15 +62,15 @@ MapVoxelManager::~MapVoxelManager()
 void
 MapVoxelManager::load(const YAML::Node& node)
 {
-  const YAML::Node * mapVoxel = node.FindValue("transfers");
+  YAML::Node mapVoxel = node["transfers"];
   CafeEnv::self().caOutputP0() << "\n" << "Transfer Review Review" << "\n";
   CafeEnv::self().caOutputP0() << "=============================" << std::endl;
 
   if (mapVoxel)
   {
-    for (size_t iMapVoxel = 0; iMapVoxel < mapVoxel->size(); iMapVoxel++)
+    for (size_t iMapVoxel = 0; iMapVoxel < mapVoxel.size(); iMapVoxel++)
     {
-      const YAML::Node & mV_node = (*mapVoxel)[iMapVoxel];
+      const YAML::Node mV_node = mapVoxel[iMapVoxel];
       std::string name = "mapping_voxel";
       get_if_present_no_default(mV_node, "bin_size", sizeOfBin);
       get_if_present(mV_node, "tolerance", isInElemTolerance_, isInElemTolerance_);

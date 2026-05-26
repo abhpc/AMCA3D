@@ -1,348 +1,193 @@
 # AMCA3D
 
-# AMCA3D
+AMCA3D 是一个用于增材制造过程中介观晶粒组织演化模拟的并行 C++ 程序，核心方法为三维元胞自动机方法（3D Cellular Automata）。程序通过 MPI 并行运行，输入文件采用 YAML 格式，结果可使用 ParaView 等工具进行可视化。
 
-AMCA3D (3D Cellular Automata method for Additive Manufacturing) is a parallel C++ program designed for modeling mesoscale grain structure evolution during the additive manufacturing process.
+## 运行环境
 
-# Requirement
+当前仓库已按以下环境完成适配和编译验证：
 
-- MPICH2
-- YAML (ver. 0.3.0)
-- BOOST (ver. 1.64.0)
-- CMAKE
-- gcc & g++
-- git (Optional)
-- Paraview (for visualization)
+- 平台：星河超算
+- 操作系统：Rocky Linux 8.10
+- MPI：通过环境模块加载 MPICH，默认模块名为 `mpich/3.2`
+- 编译器：`mpicc`、`mpicxx`
+- 构建工具：CMake、make
+- 依赖库：Boost、yaml-cpp、pthread
+- YAML 解析库：系统包 `yaml-cpp-devel`，已适配 yaml-cpp 0.6.x 接口
 
-**It is highly recommended to install the given version of YAML and BOOST. Although it is not the newest, we did not do any compatibility test for the newest version.**
+本版本不再要求手工安装旧版 yaml-cpp 0.3.0。若系统已安装 `yaml-cpp-devel`，可直接使用系统库编译。
 
-# Installation
+## 编译方法
 
-AMCA3D should be installed on a Unix-like system. If you are using Windows 10 or 11, WSL (Windows Subsystem for Linux) is good. Check [here](https://docs.microsoft.com/zh-cn/windows/wsl/install) for the installation of WSL.
-
-## Install gcc and so on
-
-Using the following command to install a modern GCC compiler. If you already have one, go straight to the MPI setup.
+仓库提供统一编译脚本 `compile.sh`。当前推荐并已验证的方式是通过该脚本编译 MPICH 版本的 AMCA3D。在星河超算 Rocky Linux 8.10 环境下，进入仓库根目录后执行：
 
 ```bash
-sudo apt install gcc g++ cmake git build-essential unzip
+./compile.sh
 ```
 
-## Install MPICH
+脚本默认执行以下操作：
+
+- 清理并重新创建 `build` 目录
+- 若系统支持 `module` 命令，则加载 `mpich/3.2`
+- 使用 `mpicc` 和 `mpicxx` 作为 C/C++ 编译器
+- 检查 CMake、make、MPI 编译器和 yaml-cpp
+- 调用 CMake 配置工程
+- 使用多核并行执行 `make`
+
+编译成功后，可执行文件位于：
 
 ```bash
-sudo apt install mpich
+build/AMCA3D
 ```
 
-## Install BOOST
+## 编译脚本参数
 
-Install `BOOST` to the default path, name `$HOME/BOOST`. Or edit the `prefix` option to the preferred path where you want to install.
+`compile.sh` 支持通过环境变量调整编译行为：
 
 ```bash
-# download and unzip
-cd ~
-wget -c https://boostorg.jfrog.io/artifactory/main/release/1.64.0/source/boost_1_64_0.tar.gz
-
-tar -xf boost_1_64_0.tar.gz
-cd boost_1_64_0
-
-# install
-./bootstrap.sh --prefix=$HOME/BOOST --with-libraries=signals,\
-regex,filesystem,system,mpi,serialization,thread,program_options,exception
-./b2 -j 4 install
+JOBS=8 ./compile.sh
 ```
 
-Now the `Boost` has been installed***.***
-
-## Install YAML
-
-Install `BOOST` to the default path, name `$HOME/YAML`. Or edit the `prefix` option to the preferred path where you want to install.
+指定并行编译线程数。
 
 ```bash
-# download and unzip
-cd ~
-wget -c https://github.com/jbeder/yaml-cpp/archive/refs/tags/release-0.3.0.tar.gz
-tar -xf release-0.3.0.tar.gz
-cd yaml-cpp-release-0.3.0/
-mkdir build
-cd build
-# install
-cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_CXX_FLAGS=-std=c++11 \
--DCMAKE_CC_COMPILER=mpicc -DCMAKE_INSTALL_PREFIX=$HOME/YAML ..
-make
-make install
+CLEAN=0 ./compile.sh
 ```
 
-Now the `YAML` has been installed***.***
-
-## Install AMCA3D
-
-## Step1
+复用已有 `build` 目录进行增量编译。
 
 ```bash
-# download
-cd ~
-git clone https://github.com/YPLianGroup/AMCA3D.git
-cd AMCA3D
-mkdir build
-cd build
-cp ../configure.sh .
-```
-Or you can click here ([Github](https://github.com/YPLianGroup/AMCA3D) & [LianGroup](http://www.lianyanpinggroup.com/819.html)) to download the code.
-## Step2
-
-If the `BOOST` and `YAML` have been installed to the default path, skip this step and go to Step 3 directly. 
-
-Then set the directories for both `Boost` and `YAML` by editing the first 3 lines of the `configure.sh` script via notepad or vim. Let’s see the first 3 lines of `configure.sh`:
-
-```bash
-# set "boost_root" and "yaml_root" to the your path of BOOST and YAML
-boost_root= {YOUR ***BOOST_ROOT_DIR***}
-yaml_root= {YOUR ***YAML_ROOT_DIR***}
+BUILD_TYPE=Debug ./compile.sh
 ```
 
-## Step3
-
-Execute this for an executable file `AMCA3D`:
+生成 Debug 构建。
 
 ```bash
-./configure.sh
-make
+MPI_MODULE=mpich/3.2 ./compile.sh
 ```
 
-# ****Tutorial & examples****
-
-## Nucleation
-
-This example shows the nucleation in a uniform temperature field with a consistent cooling rate. The nucleation site is randomly distributed in the domain and its critical undercooling follows a Gaussian distribution.
-
-To run this example, go to the example folder, name `\CA_ROOT\example\nucleation`, then execute:
+指定需要加载的 MPI 模块。默认值为 `mpich/3.2`。
 
 ```bash
-./nucleation.sh
+LOAD_MPI_MODULE=0 ./compile.sh
 ```
 
-The script `nucleation.sh` looks like
+跳过模块加载，使用当前 shell 环境中的 MPI。
 
 ```bash
+PURGE_MODULES=0 ./compile.sh
+```
+
+加载 MPICH 前不执行 `module purge`。
+
+如果 Boost 或 yaml-cpp 安装在非系统路径，可通过以下变量传入：
+
+```bash
+BOOST_ROOT=/path/to/boost YAML_ROOT=/path/to/yaml-cpp ./compile.sh
+```
+
+## yaml-cpp 兼容性说明
+
+旧版 AMCA3D 代码使用 yaml-cpp 0.3 风格接口，例如 `YAML::Parser`、`FindValue`、`YAML::Iterator` 和 `GetMark()`。Rocky Linux 8.10 的 `yaml-cpp-devel` 提供的是较新的 yaml-cpp 0.6.x 接口，因此旧代码会在编译阶段出现 YAML 相关错误。
+
+当前代码已完成迁移：
+
+- 使用 `YAML::Load` 读取输入文件
+- 使用 `node["key"]` 查询 YAML 节点
+- 使用 `YAML::const_iterator` 遍历节点
+- 使用 `node.Mark()` 获取错误位置
+- 通过 `node.as<T>()` 完成标量类型转换
+
+因此在星河超算 Rocky Linux 8.10 环境中，无需回退安装旧版 yaml-cpp。
+
+## 运行示例
+
+完成编译后，可运行均匀温度场形核算例：
+
+```bash
+cd example/nucleation
 cp ../../build/AMCA3D ./
-mpirun -np 4 AMCA3D -i Inputfile.i -o run.log
+mpirun -np 4 ./AMCA3D -i Inputfile.i -o run.log
 ```
 
-The first line is to copy the `AMCA3D` to the working path, and the second line is to run the simulation. `mpirun -np <number of processes> [*program-name]*` is a commend to run the program (`AMCA3D` here) as multiple processes. `-i [inputfile-name] -o [outputfile-name]` is using to specify the input and output file name. The input file tells the program how to set up the simulation, and the output file gives the detail of the simulation, including the review of the simulation, process monitor, or some error information.
+粉末床熔融算例位于：
 
-Now the program is running, a `\result` folder is created and the frames of simulation is saved in this folder. Open the `\CA_ROOT\example\nucleation\result\Grain.pvd` to visualize results by a third-party open-source program `paraview`. Once the simulation is done, the final result is saved to `finalGrain.vtk`. If everything goes well, you can see the following result in `paraview`.
-
-![The color shows the grain structures.](./FIGURE/Nucleation.png)
-
-The color shows the grain structures.
-
-Currently, the first try is done, and we can modify the input file to set up our own simulation. so let’s take a look at the input files first. At first, the input file is written in a `YAML` format. It is OK if you do not know `YAML` before because it is very human-friendly, and we do not need to write input files from scratch.
-
-The most important parameter is listed in the `realms` section. It looks like:
-
-```yaml
-realms:
-  - name: realm1
-    type: cellular_automata
-    dimension: 3
-
-    domain:
-      type: cubic
-      original_point: [0,0,0]
-      lateral_sizes: [0.03, 0.03, 0.03]
-
-    discretization:
-      cell_size: 0.0005
-
-    nucleation_rules:
-      - surface:
-          type: Gaussian
-          site_density: 0.0
-          mean: 2
-          standard_deviation: 0.5
-
-      - bulk:
-          type: Gaussian
-          site_density: 10e6
-          mean: 3
-          standard_deviation: 1
-
-    problem_physics:
-        type: RappazGandin
-        initial_temperature: -0.2
-        melting_temperature: 0.0
-        t_dot: -20
-        a1: -0.544e-4 
-        a2: 2.03e-4
-        a3: 0.0
+```text
+example/PBF_AM/PBF_x
+example/PBF_AM/PBF_y
 ```
 
-The `domain` and `discretization` set the location and size of the domain.
-
-`nucleation_rules` controls the nucleation density and the critical undercooling of the site. Nucleation may occur both at the surface and in the bulk of the liquid volume. Taking the bulk nucleation as an example, we use $\rho$ to denote the nucleation site density for bulk liquid, and V represents the total volume of the simulation domain. Then the total number of bulk nucleation sites in the bulk is given by $N=\rho V$. `mean` and `standard deviation` are the parameters for the critical undercooling $\Delta T_c$ of the nucleation site. Once the undercooling is greater than the $\Delta T_c$, nucleation occurs.
-
-`problem_physics` controls the nucleation condition (`initial_temperature`, `t_dot`: cooling rate) and the the property of cells (`melting_temperature`, `a1 a2 a3`: parameters for a polynomial $v(\Delta T)=a_1\Delta T+a_2\Delta T^2+a_3\Delta T^3$, which is obtain by dendrite tip growth kinetics). 
-
-Now, let's try to edit these parameters for your second simulation. Notice, `AMCA3D` is dimensionless, so the unit must be unified.
-
-## Additive manufacturing
-
-Now let’s try to apply this program to an additive manufacturing process. A `.txt` format temperature field is needed, which can be obtained by thermal process modeling with a coarse mesh. The program read the temperature results and interpolates to fine CA mesh. Typically, the two modeling domains can be seen as follows.
-
-![The outline domain is for thermal modeling with a coarse mesh, and the solid domain is for CA with a fine mesh.](./FIGURE/DOMAIN.png)
-
-The outline domain is for thermal modeling with a coarse mesh, and the solid domain is for CA with a fine mesh.
-
-  Here are 2 powder bed fusion (PBF) examples in the `\PBF_AM` folder. Let’s try `PBF_x` first.
-
-## PBF_x
-
-Go to the folder `\example\PBF_x`, then execute:
+对应脚本为：
 
 ```bash
+cd example/PBF_AM/PBF_x
 ./PBF_x.sh
 ```
 
-The script unzip `PBF_x.zip` for the temperature results file and run the simulation. If everything goes well, you can see the following image in your [Paraview](https://www.paraview.org/download/):
-
-![Left: grain growth evolution. Right: interpolated temperature field. The deep blue on Left shows the void cells and liquid cells. The deep blue on Right only shows the void region. Only a slice of temperature results is given due to reducing the file size.](./FIGURE/PBF_x.png)
-
-Left: grain growth evolution. Right: interpolated temperature field. The deep blue on Left shows the void cells and liquid cells. The deep blue on Right only shows the void region. Only a slice of temperature results is given due to reducing the file size.
-
-Let’s have a look at the input file. At first, two solvers should be selected in the `solvers` section:
-
-```yaml
-solvers:
-   - cellular_automata         # activate the cellular automata method
-   - finite_element_method     # activate the finite element method to calculate temperature from coarse mesh to fine mesh
-```
-
-Second, a new section `transfers` should be defined. This section controls the algorithm to map CA mesh to FEM mesh. The initial settings are OK for simulation. The most important keyword is `void_temperature` here. The `void_temperature` defines a cutoff temperature for the void. All cells are deactivated in simulation if their temperature is less than `void_temperature`, and are reactivated again if their temperature is greater than `void_temperature`. Through this, the void between powder particles can be simulated.
-
-Next, a new `realm` for finite_element should be defined. It look like:
-
-```yaml
-- name: realm0
-    type: finite_element
-    dimension: 3
-    mesh: ./PBF_x.txt
-
-    solution_options:
-       name: my_options
-
-       options:
-         - load_data_from_file:
-             theta: theta
-             for_whole_time: yes
-             length_scale: 10.0
-             time_scale: 1.0
-             lines_for_title: 4
-             lines_for_subtitle: 5
-             x_offset: 0
-             z_offset: 0
-
-    output:
-      output_data_base_name: ./Results/FEM
-      output_frequency: 200000
-      output_time_interval: 0.0002
-      output_variables:
-        - temperature
-```
-
-`mesh` specifies the path of temperature results. The `options` section is used to make sure the temperature field is well set up. For example, `length_scale` and `time_scale` are used to unify the unit of length and time between CA and thermal modeling. `offset` is used to adjust the location of the thermal field. `lines_for_title` and `lines_for_subtitle` corresponding to the file’s title.
-
-Now we know how to simulate the grain evolution under a given temperature result, then here is a simple example to illustrate the file format that the program supports. The temperature result file may look like this:
-
-```
-Title: 
-Temperature file example
-2022/04/13
-End of title                                                                         
-
-Subtitle (the second line)
-No. step   No. step    time   time   x0    x1   y0   y1    z0   z1
-   1          1         0       0     0     1    0    1     0    1
-x  y  z  tn
-0  0  0  293
-1  0  0  293
-0  1  0  293
-1  1  0  293
-0  0  1  293
-1  0  1  293
-0  1  1  293
-1  1  1  293
-
-Subtitle (the second line)
-No. step   No. step    time   time   x0    x1   y0   y1    z0   z1
-   2          2         0.1    0.1     0     1    0    1     0    1
-x  y  z  tn
-0  0  0  300
-1  0  0  300
-0  1  0  300
-1  1  0  300
-0  0  1  300
-1  0  1  300
-0  1  1  300
-1  1  1  300
-```
-
-As we can see, the example file consists of three parts: title, subtitle, and data. The title part consists of 4 lines, the subtitle consists of 5 lines and the data part consists of 8 lines. The title part is optional but the subtitle part and data parts are necessary for the program. The subtitle part indicates the step, time, and domain size information. The number of cells in the `X Y Z` direction can be gotten by `x1-x0 y1-y0 z1-z0`, respectively, and the total number of cells is $N_{cell}=(x1-x0)(y1-y0)(z1-z0)$. The data part gives the (X,Y,Z) coordinates and temperature information for each point. The number of lines in data part $N_{data}$ must match the number of cells in the dataset. Here, $N_{cell}=1, N_{data}=8$ (a hex cell has 8 points). **Notice that only structured hex mesh is supported now.** So there is a relation $N_{data}=(x1-x0+2)(y1-y0+2)(z1-z0+2)$. Finally, the point data should be sort in the order of (X,Y,Z). You can modify the `lines_for_title` and `lines_for_subtitle` in the input file to adapt your temperature file, but the  `lines_for_subtitle` must be great than 4, and the 4th line of the subtitle should be written in the given format.
-
-## PBF_y
-
-Now `PBF_x` case shows how to simulate the grain evolution with a given file, but if we have a series of temperature file, this is very common for additive manufacturing because of the line-by-line and layer-by layer process. This example shows how to initialize the grain structure by existing simulation results. 
-
-At first, go to the folder `\example\PBF_y`, then execute:
-
 ```bash
+cd example/PBF_AM/PBF_y
 ./PBF_y.sh
 ```
 
-The script run a nucleation case first, and the nucleation result are saved to `\PBF_y\PreRun`. Then,  `PBF_x.zip` is unzipped and a second case that a laser is melting on a powder bed with the grain structure initialized by the nucleation result. is conducted. If everything goes well, you can see the following image in your [Paraview](https://www.paraview.org/download/):
+运行结果通常输出到算例目录下的 `Results` 或 `result` 目录。可使用 ParaView 打开 `.pvd`、`.vtk`、`.vtu` 或 `.vtr` 文件查看晶粒组织和温度场结果。
 
-![(Left) nucleation result and (Right) PBF_y result.](./FIGURE/PBF_y.png)
+## 输入文件
 
-(Left) nucleation result and (Right) PBF_y result.
+AMCA3D 使用 YAML 格式输入文件。典型输入文件包括：
 
-As we can see, the nucleation result has been used to initialize the grain structures. This is so-called **restart strategy**, which is illustrate in [[1]](https://linkinghub.elsevier.com/retrieve/pii/S0264127520309461). This function is implemented by reading the previous result file (default: grainInfo.txt). A result file must be specified in `realm: solution_options: options: output_microstructure_information \ load_microstructure_information` in the inputfile, such as:
+- `realms`：计算域、维度、网格尺寸、物理模型和输出配置
+- `solvers`：启用的求解器，例如 `cellular_automata` 或 `finite_element_method`
+- `nucleation_rules`：形核位置、形核密度和临界过冷度分布
+- `problem_physics`：初始温度、熔点、冷却速率和枝晶尖端生长动力学参数
+- `solution_options`：温度场文件、重启动、输出频率等运行选项
 
+可从 `example/nucleation/Inputfile.i` 和 `example/PBF_AM` 下的输入文件开始修改。
+
+## 常见问题
+
+### 编译时报 yaml-cpp 错误
+
+请确认使用的是本仓库当前代码，并通过 `compile.sh` 重新清理编译：
+
+```bash
+./compile.sh
 ```
-- output_microstructure_information:
-             file_name: grainInfo.txt
-             output_seeds: yes
-         - load_microstructure_information:
-             file_name: ./PreRun/grainInfo.txt 
+
+若仍然报错，检查系统是否安装 yaml-cpp 开发包：
+
+```bash
+rpm -qa | grep yaml-cpp
 ```
 
-Notice: To use the **restart strategy**, make sure the `domain size` and the `number of processes` are consistent in the series of simulations. Otherwise, error occurs.
+Rocky Linux 8.10 上通常需要安装 `yaml-cpp-devel`。
 
-# ****Contact and Citatioin****
+### 找不到 mpicc 或 mpicxx
 
-If you conduct your research based on our open-source code AMCA3D, **please cite the following reference in your upcoming papers**, and it will be better to respect our work by making a statement in Acknowledgement (e.g., “**We are grateful to Prof. [Yanping Lian group](http://www.lianyanpinggroup.com/en/) for sharing their codebase of AMCA3D**”.). Many thanks in advance!
+确认已加载 MPICH 模块：
 
-If you have any questions regarding the codebase, please feel free to contact us at [yanping.lian@bit.edu.cn](mailto:yanping.lian@bit.edu.cn).
+```bash
+module load mpich/3.2
+which mpicc
+which mpicxx
+```
 
-Hope you enjoy the AMCA3D.
+也可以直接让 `compile.sh` 自动加载默认模块。
 
-[1] F.Y. Xiong, Z.T. Gan, J.W. Chen, Y.P. Lian*. Evaluate the effect of melt pool convection on grain structure in selective laser melted IN625 alloy using experimentally validated process-structure modeling. *Journal of Materials Processing Technology*, 303:117538,2022.
+### 需要更换 MPICH 版本
 
-[2] F.Y. Xiong, C.Y. Huang, O. L. Kafka, Y. P. Lian*, W.T. Yan, M.J. Chen, D.N. Fang. Grain growth prediction in selective electron beam melting of Ti-6Al-4V with a cellular automaton method. *Materials & Design*, 199:109410, 2021.
+如果星河超算环境提供其他 MPICH 模块，可通过 `MPI_MODULE` 指定：
 
-[3] L.C Geng, B. Zhang, Y.P Lian*, R.X. Gao, D.N. Fang*. An image-based multi-level hp FCM for predicting elastoplastic behavior of imperfect lattice structure by SLM. *Computational Mechanics*, 2022.
+```bash
+MPI_MODULE=<module-name> ./compile.sh
+```
 
-[4] D. Kats, Z. Wang, Z. Gan, W.K. Liu, G. J. Wagner, Y.P. Lian*. A physics-informed machine learning method for predicting grain structure characteristics in directed energy deposition. *Computational Materials Science*, 202:110958, 2021.
+## 引用
 
-[5] **廉艳平***，王潘丁，高杰，等. 金属增材制造若干关键力学问题研究进展. 力学进展，51(3):648-701, 2021. (Y.P. Lian*, P.D. Wang, J. Gao, et al. Fundamental mechanics problems in metal additive manufacturing: A state-of-art review. Advances in Mechanics, 51(3): 648-701, 2021).
+如果基于 AMCA3D 开展研究，请引用相关论文并注明代码来源。
 
-[6] 黄辰阳，陈嘉伟，朱言言，**廉艳平***. 激光定向能量沉积的粉末尺度多物理场数值模拟. 力学学报，53(12):3240-3251, 2021. (C.Y Huang, J.W. Chen, Y.Y. Zhu, Y.P. Lian*. Powder scale multiphysics numerical modeling of laser directed energy deposition, Chinese Journal of Theoretical and Applied Mechanics, 53(12): 3240-3251, 2021)
+[1] F.Y. Xiong, Z.T. Gan, J.W. Chen, Y.P. Lian*. Evaluate the effect of melt pool convection on grain structure in selective laser melted IN625 alloy using experimentally validated process-structure modeling. Journal of Materials Processing Technology, 303:117538, 2022.
 
-[7] 陈嘉伟，熊飞宇，黄辰阳，**廉艳平***. 金属增材制造数值模拟. 中国科学: 物理学 力学 天文学, 50 (9): 09007, 2020. (J.W. Chen, F.Y. Xiong, C.Y. Huang, Y.P. Lian. Numerical simulation on metal additive manufacturing. Science Sinica Physica, Mechanica & Astronomica, 50 (9): 09007, 2020.)
+[2] F.Y. Xiong, C.Y. Huang, O. L. Kafka, Y. P. Lian*, W.T. Yan, M.J. Chen, D.N. Fang. Grain growth prediction in selective electron beam melting of Ti-6Al-4V with a cellular automaton method. Materials & Design, 199:109410, 2021.
 
-[8] Y.P. Lian*, Z. Gan, C. Yu, D. Kats, W. K. Liu, G. J. Wagner. A cellular automaton finite volume method for microstructure evolution during additive manufacturing. Materials & Design, 169: 107672, 2019.
+[3] Y.P. Lian*, Z. Gan, C. Yu, D. Kats, W. K. Liu, G. J. Wagner. A cellular automaton finite volume method for microstructure evolution during additive manufacturing. Materials & Design, 169:107672, 2019.
 
-[9] Y.P. Lian, S. Lin, W.T. Yan, W.K. Liu, G.J. Wagner*. A parallelized three-dimensional cellular automaton model for grain growth during additive manufacturing. Computational Mechanics, 61:543-559, 2018.
-
-[10] Z. Gan#, Y.P. Lian#, S. Lin, K. Jones, W.K. Liu*, G. Wagner*. Benchmark study of thermal behavior, surface topography, and dendritic microstructure in selective laser melting of Inconel 625. *Integrating Materials and Manufacturing Innovation*, 8: 178-193, 2019.
-
-[11] W.T. Yan#, Y.P. Lian#, C. Yu, O. Kafka, Z. L. Liu, W.K. Liu, G. Wagner*. An integrated process-structure-property modeling framework for additive manufacturing. *Computer Methods in Applied Mechanics and Engineering*, 339: 184-204, 2018.
+[4] Y.P. Lian, S. Lin, W.T. Yan, W.K. Liu, G.J. Wagner*. A parallelized three-dimensional cellular automaton model for grain growth during additive manufacturing. Computational Mechanics, 61:543-559, 2018.

@@ -67,25 +67,25 @@ void
 FiniteElementManager::load(const YAML::Node& node)
 {
   // Second: get solution options
-  const YAML::Node *solutionOptions = node.FindValue("solution_options");
+  YAML::Node solutionOptions = node["solution_options"];
   if (solutionOptions)
   {
     // Make some things pretty in the log file
     CafeEnv::self().caOutputP0() << "\n" << "FEM: Solution Options Review" << std::endl;
     CafeEnv::self().caOutputP0() << "=============================" << std::endl;
     std::string name_;
-    get_required(*solutionOptions, "name", name_);
+    get_required(solutionOptions, "name", name_);
 
-    const YAML::Node * options_node = expect_sequence(*solutionOptions, "options", true);
+    YAML::Node options_node = expect_sequence(solutionOptions, "options", true);
     if (options_node)
     {
-      for (size_t ioption = 0; ioption < options_node->size(); ioption++)
+      for (size_t ioption = 0; ioption < options_node.size(); ioption++)
       {
-        const YAML::Node & option_node = (*options_node)[ioption];
+        const YAML::Node option_node = options_node[ioption];
         if (expect_map(option_node, "load_data_from_file", true))
         {
           bool loadWholeTimeData = false;
-          const YAML::Node& loadData = *option_node.FindValue("load_data_from_file");
+          YAML::Node loadData = option_node["load_data_from_file"];
           get_if_present(loadData, "for_whole_time", loadWholeTimeData, loadWholeTimeData);
           get_if_present(loadData, "lines_for_title", inNumTitleLines_, inNumTitleLines_);
           get_if_present(loadData, "lines_for_subtitle", inNumSubtitleLines_, inNumSubtitleLines_);
@@ -108,9 +108,9 @@ FiniteElementManager::load(const YAML::Node& node)
   }
 
   // Third: get mesh
-  const YAML::Node * mesh = node.FindValue("mesh");
+  YAML::Node mesh = node["mesh"];
   // get parameterized mesh
-  const YAML::Node * domain_node = node.FindValue("domain");
+  YAML::Node domain_node = node["domain"];
   if (mesh)
   {
     CafeEnv::self().caOutputP0() << "\n" << "FEM Domain Size Review" << "\n";
